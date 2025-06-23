@@ -37,6 +37,8 @@
             width: 40px;
             border-radius: 0.5rem; /* rounded-lg */
             transition: background-color 0.2s;
+            /* Asegura que los días se centren correctamente en la celda */
+            margin: auto;
         }
 
         .calendar-day.today {
@@ -49,11 +51,14 @@
             color: #9ca3af; /* Gris Tailwind 400 */
         }
 
-        /* Estilos para el contenedor del calendario */
-        .calendar-container {
+        /* Estilos para el contenedor de la cuadrícula del calendario */
+        .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 0.5rem; /* gap-2 */
+            width: 100%; /* Asegura que el calendario ocupe el ancho completo disponible */
+            max-width: 300px; /* Ancho máximo para un solo mes, ajustar si es necesario */
+            margin: 0 auto; /* Centrar el calendario dentro de su contenedor */
         }
 
         /* Estilos responsivos para el calendario */
@@ -66,6 +71,17 @@
             .calendar-header {
                 font-size: 1.125rem; /* text-lg */
             }
+            .calendar-grid {
+                max-width: 100%; /* Permitir que ocupe todo el ancho en móviles */
+            }
+        }
+
+        /* Ajuste para que los calendarios se distribuyan mejor en la cuadrícula principal */
+        #calendars-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Columnas fluidas para adaptarse a la pantalla */
+            gap: 2rem; /* Espacio entre los calendarios de los meses */
+            justify-items: center; /* Centra los elementos dentro de la cuadrícula */
         }
     </style>
 </head>
@@ -76,7 +92,7 @@
             Cuenta Regresiva y Calendario hasta el 2 de Agosto de 2025
         </h1>
 
-        <!-- Contenedor para la cuenta regresiva -->
+        <!-- Contenedor para la primera cuenta regresiva (2 de agosto) -->
         <div class="flex flex-col items-center justify-center mb-8 bg-blue-100 p-4 rounded-lg shadow-md">
             <p class="text-xl sm:text-2xl font-semibold text-blue-800">
                 ¡Para el primer reencuentro Maffei faltan solo...
@@ -87,17 +103,31 @@
             <p class="text-sm text-blue-600 mt-1">(Hasta el 2 de Agosto de 2025)</p>
         </div>
 
+        <!-- Contenedor para la segunda cuenta regresiva (22 de agosto) -->
+        <div class="flex flex-col items-center justify-center mb-8 bg-green-100 p-4 rounded-lg shadow-md">
+            <p class="text-xl sm:text-2xl font-semibold text-green-800">
+                ¡Para el segundo encuentro Maffei faltan solo...
+            </p>
+            <p id="countdown2" class="text-4xl sm:text-6xl font-extrabold text-green-700 mt-2">
+                -- Días
+            </p>
+            <p class="text-sm text-green-600 mt-1">(Hasta el 22 de Agosto de 2025)</p>
+        </div>
+
         <!-- Contenedor principal del calendario -->
-        <div id="calendars-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div id="calendars-container">
             <!-- Los calendarios se generarán aquí por JavaScript -->
         </div>
     </div>
 
     <script>
-        // Define la fecha objetivo (2 de Agosto de 2025)
-        const targetDate = new Date('2025-08-02T23:59:59'); // Incluimos la hora para asegurar que el día 2 de agosto se cuenta completo
+        // Define la fecha objetivo para la primera cuenta regresiva (2 de Agosto de 2025)
+        const targetDate = new Date('2025-08-02T23:59:59');
 
-        // Función para actualizar la cuenta regresiva
+        // Define la fecha objetivo para la segunda cuenta regresiva (22 de Agosto de 2025)
+        const targetDate2 = new Date('2025-08-22T23:59:59');
+
+        // Función para actualizar la primera cuenta regresiva
         function updateCountdown() {
             const now = new Date();
             const diff = targetDate - now;
@@ -118,6 +148,28 @@
             document.getElementById('countdown').innerText = `${days} días, ${hours} horas, ${minutes} minutos, ${seconds} segundos`;
         }
 
+        // Función para actualizar la segunda cuenta regresiva
+        function updateCountdown2() {
+            const now = new Date();
+            const diff = targetDate2 - now;
+
+            // Si la fecha objetivo ya pasó
+            if (diff < 0) {
+                document.getElementById('countdown2').innerText = '¡La fecha ha llegado!';
+                return;
+            }
+
+            // Calcula días, horas, minutos y segundos
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            // Actualiza el texto de la cuenta regresiva
+            document.getElementById('countdown2').innerText = `${days} días, ${hours} horas, ${minutes} minutos, ${seconds} segundos`;
+        }
+
+
         // Función para generar un calendario para un mes y año específicos
         function createCalendar(year, monthIndex) {
             const today = new Date();
@@ -131,7 +183,7 @@
             const startDayAdjusted = (firstWeekday === 0) ? 6 : firstWeekday - 1;
 
             const calendarDiv = document.createElement('div');
-            calendarDiv.className = 'bg-gray-50 p-4 rounded-lg shadow-inner';
+            calendarDiv.className = 'bg-gray-50 p-4 rounded-lg shadow-inner flex flex-col items-center'; // Añadido flex y items-center para centrar el contenido
 
             // Nombre del mes y año
             const monthName = new Date(year, monthIndex).toLocaleString('es-AR', { month: 'long', year: 'numeric' });
@@ -139,7 +191,7 @@
                 <h3 class="text-xl font-semibold text-center text-gray-700 mb-4 calendar-header">
                     ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}
                 </h3>
-                <div class="calendar-container">
+                <div class="calendar-grid"> <!-- Usamos la nueva clase calendar-grid -->
                     <div class="text-center text-sm font-medium text-gray-600">Lun</div>
                     <div class="text-center text-sm font-medium text-gray-600">Mar</div>
                     <div class="text-center text-sm font-medium text-gray-600">Mié</div>
@@ -148,7 +200,7 @@
                     <div class="text-center text-sm font-medium text-gray-600">Sáb</div>
                     <div class="text-center text-sm font-medium text-gray-600">Dom</div>
                 </div>
-                <div class="calendar-container mt-2" id="month-${year}-${monthIndex}">
+                <div class="calendar-grid mt-2" id="month-${year}-${monthIndex}"> <!-- Usamos la nueva clase calendar-grid -->
                     <!-- Los días se insertarán aquí -->
                 </div>
             `;
@@ -176,9 +228,8 @@
                     dayDiv.classList.add('today');
                 }
 
-                // Aplicar tachado si el día está en el rango
-                // Un día se tacha si está entre hoy (inclusive) y la fecha objetivo (inclusive)
-                if (currentDayDate >= today && currentDayDate <= targetDate) {
+                // Aplicar tachado SÓLO si el día ya pasó (menor que hoy)
+                if (currentDayDate < today) {
                     dayDiv.classList.add('crossed-out');
                 }
 
@@ -209,8 +260,10 @@
 
         // Inicializar la cuenta regresiva y los calendarios al cargar la página
         window.onload = function() {
-            updateCountdown(); // Actualiza la cuenta regresiva inmediatamente
-            setInterval(updateCountdown, 1000); // Actualiza cada segundo
+            updateCountdown(); // Actualiza la primera cuenta regresiva inmediatamente
+            updateCountdown2(); // Actualiza la segunda cuenta regresiva inmediatamente
+            setInterval(updateCountdown, 1000); // Actualiza la primera cada segundo
+            setInterval(updateCountdown2, 1000); // Actualiza la segunda cada segundo
 
             renderCalendars(); // Renderiza los calendarios
         };
