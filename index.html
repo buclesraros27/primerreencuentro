@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario y Cuenta Regresiva</title>
+    <!-- Incluye Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define la fuente Inter */
+        body {
+            font-family: "Inter", sans-serif;
+        }
+
+        /* Estilo para los días tachados */
+        .crossed-out {
+            position: relative;
+            color: #ef4444; /* Rojo Tailwind 500 */
+        }
+
+        .crossed-out::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            border-top: 2px solid #ef4444; /* Rojo Tailwind 500 */
+            transform: translateY(-50%) rotate(-5deg); /* Ligera inclinación */
+        }
+
+        /* Estilo para los días del calendario */
+        .calendar-day {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            width: 40px;
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: background-color 0.2s;
+        }
+
+        .calendar-day.today {
+            background-color: #3b82f6; /* Azul Tailwind 500 */
+            color: white;
+            font-weight: bold;
+        }
+
+        .calendar-day.other-month {
+            color: #9ca3af; /* Gris Tailwind 400 */
+        }
+
+        /* Estilos para el contenedor del calendario */
+        .calendar-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem; /* gap-2 */
+        }
+
+        /* Estilos responsivos para el calendario */
+        @media (max-width: 640px) {
+            .calendar-day {
+                height: 32px;
+                width: 32px;
+                font-size: 0.875rem; /* text-sm */
+            }
+            .calendar-header {
+                font-size: 1.125rem; /* text-lg */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4 sm:p-6">
+
+    <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-4xl mb-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">
+            Cuenta Regresiva y Calendario hasta el 2 de Agosto de 2025
+        </h1>
+
+        <!-- Contenedor para la cuenta regresiva -->
+        <div class="flex flex-col items-center justify-center mb-8 bg-blue-100 p-4 rounded-lg shadow-md">
+            <p class="text-xl sm:text-2xl font-semibold text-blue-800">
+                ¡Para el primer reencuentro Maffei faltan solo...
+            </p>
+            <p id="countdown" class="text-4xl sm:text-6xl font-extrabold text-blue-700 mt-2">
+                -- Días
+            </p>
+            <p class="text-sm text-blue-600 mt-1">(Hasta el 2 de Agosto de 2025)</p>
+        </div>
+
+        <!-- Contenedor principal del calendario -->
+        <div id="calendars-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Los calendarios se generarán aquí por JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Define la fecha objetivo (2 de Agosto de 2025)
+        const targetDate = new Date('2025-08-02T23:59:59'); // Incluimos la hora para asegurar que el día 2 de agosto se cuenta completo
+
+        // Función para actualizar la cuenta regresiva
+        function updateCountdown() {
+            const now = new Date();
+            const diff = targetDate - now;
+
+            // Si la fecha objetivo ya pasó
+            if (diff < 0) {
+                document.getElementById('countdown').innerText = '¡La fecha ha llegado!';
+                return;
+            }
+
+            // Calcula días, horas, minutos y segundos
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            // Actualiza el texto de la cuenta regresiva
+            document.getElementById('countdown').innerText = `${days} días, ${hours} horas, ${minutes} minutos, ${seconds} segundos`;
+        }
+
+        // Función para generar un calendario para un mes y año específicos
+        function createCalendar(year, monthIndex) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalizar a inicio del día
+
+            const firstDayOfMonth = new Date(year, monthIndex, 1);
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate(); // Obtiene el último día del mes
+            const firstWeekday = firstDayOfMonth.getDay(); // 0 (Domingo) a 6 (Sábado)
+
+            // Ajustar para que la semana empiece en Lunes (0-6 -> Lunes=0, Domingo=6)
+            const startDayAdjusted = (firstWeekday === 0) ? 6 : firstWeekday - 1;
+
+            const calendarDiv = document.createElement('div');
+            calendarDiv.className = 'bg-gray-50 p-4 rounded-lg shadow-inner';
+
+            // Nombre del mes y año
+            const monthName = new Date(year, monthIndex).toLocaleString('es-AR', { month: 'long', year: 'numeric' });
+            calendarDiv.innerHTML = `
+                <h3 class="text-xl font-semibold text-center text-gray-700 mb-4 calendar-header">
+                    ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}
+                </h3>
+                <div class="calendar-container">
+                    <div class="text-center text-sm font-medium text-gray-600">Lun</div>
+                    <div class="text-center text-sm font-medium text-gray-600">Mar</div>
+                    <div class="text-center text-sm font-medium text-gray-600">Mié</div>
+                    <div class="text-center text-sm font-medium text-gray-600">Jue</div>
+                    <div class="text-center text-sm font-medium text-gray-600">Vie</div>
+                    <div class="text-center text-sm font-medium text-gray-600">Sáb</div>
+                    <div class="text-center text-sm font-medium text-gray-600">Dom</div>
+                </div>
+                <div class="calendar-container mt-2" id="month-${year}-${monthIndex}">
+                    <!-- Los días se insertarán aquí -->
+                </div>
+            `;
+
+            const daysGrid = calendarDiv.querySelector(`#month-${year}-${monthIndex}`);
+
+            // Rellenar días vacíos al principio del mes
+            for (let i = 0; i < startDayAdjusted; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day other-month';
+                daysGrid.appendChild(emptyDay);
+            }
+
+            // Rellenar días del mes
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day text-gray-900';
+                dayDiv.innerText = day;
+
+                const currentDayDate = new Date(year, monthIndex, day);
+                currentDayDate.setHours(0, 0, 0, 0); // Normalizar
+
+                // Marcar el día actual
+                if (currentDayDate.getTime() === today.getTime()) {
+                    dayDiv.classList.add('today');
+                }
+
+                // Aplicar tachado si el día está en el rango
+                // Un día se tacha si está entre hoy (inclusive) y la fecha objetivo (inclusive)
+                if (currentDayDate >= today && currentDayDate <= targetDate) {
+                    dayDiv.classList.add('crossed-out');
+                }
+
+                daysGrid.appendChild(dayDiv);
+            }
+
+            return calendarDiv;
+        }
+
+        // Función para renderizar todos los calendarios necesarios
+        function renderCalendars() {
+            const calendarsContainer = document.getElementById('calendars-container');
+            calendarsContainer.innerHTML = ''; // Limpiar contenedores existentes
+
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth(); // 0-indexed
+
+            // Renderizar calendario desde el mes actual hasta agosto de 2025
+            for (let year = currentYear; year <= 2025; year++) {
+                let startMonth = (year === currentYear) ? currentMonth : 0;
+                let endMonth = (year === 2025) ? 7 : 11; // 7 es agosto (0-indexed)
+
+                for (let month = startMonth; month <= endMonth; month++) {
+                    calendarsContainer.appendChild(createCalendar(year, month));
+                }
+            }
+        }
+
+        // Inicializar la cuenta regresiva y los calendarios al cargar la página
+        window.onload = function() {
+            updateCountdown(); // Actualiza la cuenta regresiva inmediatamente
+            setInterval(updateCountdown, 1000); // Actualiza cada segundo
+
+            renderCalendars(); // Renderiza los calendarios
+        };
+    </script>
+</body>
+</html>
