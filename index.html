@@ -25,7 +25,7 @@
             left: 0;
             right: 0;
             border-top: 2px solid #ef4444; /* Rojo Tailwind 500 */
-            transform: translateY(-50%) rotate(-45deg); /* Se cambió a -45deg para un tachado a 45 grados */
+            transform: translateY(-50%) rotate(-45deg); /* Tachado a 45 grados */
         }
 
         /* Estilo base para los elementos dentro de la cuadrícula del calendario (días y encabezados) */
@@ -35,7 +35,6 @@
             justify-content: center;
             height: 40px;
             width: 100%; /* Asegura que la celda ocupe todo el ancho de su columna 1fr */
-            /* Se eliminó 'margin: auto;' ya que 'width: 100%' hace que no sea necesario para centrado horizontal */
         }
 
         /* Estilo específico para los días numéricos */
@@ -61,8 +60,7 @@
             grid-template-columns: repeat(7, 1fr);
             gap: 0.5rem; /* gap-2 */
             width: 100%; /* Asegura que el calendario ocupe el ancho completo disponible */
-            /* Se eliminó 'max-width: 300px;' para permitir que se expanda */
-            margin: 0 auto; /* Centrar el calendario dentro de su contenedor (si el padre es más ancho que el contenido total) */
+            margin: 0 auto; /* Centrar el calendario dentro de su contenedor */
         }
 
         /* Estilos responsivos para el calendario */
@@ -86,6 +84,17 @@
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Columnas fluidas para adaptarse a la pantalla */
             gap: 2rem; /* Espacio entre los calendarios de los meses */
             justify-items: center; /* Centra los elementos dentro de la cuadrícula */
+        }
+
+        /* Estilo para el canvas de fuegos artificiales */
+        #fireworksCanvas {
+            position: fixed; /* Fija el canvas en la ventana */
+            top: 0;
+            left: 0;
+            width: 100vw; /* Ocupa todo el ancho del viewport */
+            height: 100vh; /* Ocupa todo el alto del viewport */
+            pointer-events: none; /* Permite hacer clic a través del canvas a los elementos de abajo */
+            z-index: 9999; /* Asegura que esté por encima de todo */
         }
     </style>
 </head>
@@ -124,6 +133,9 @@
         </div>
     </div>
 
+    <!-- Canvas para los fuegos artificiales -->
+    <canvas id="fireworksCanvas"></canvas>
+
     <script>
         // Define la fecha objetivo para la primera cuenta regresiva (2 de Agosto de 2025)
         const targetDate = new Date('2025-08-02T23:59:59');
@@ -131,25 +143,150 @@
         // Define la fecha objetivo para la segunda cuenta regresiva (22 de Agosto de 2025)
         const targetDate2 = new Date('2025-08-22T23:59:59');
 
+        // Variables para controlar si ya se mostraron los fuegos artificiales para cada fecha
+        let fireworksTriggered1 = false;
+        let fireworksTriggered2 = false;
+
+        // Referencia al canvas y su contexto
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        let fireworks = []; // Array para almacenar los fuegos artificiales activos
+        let animationFrameId; // Para controlar la animación
+
+        // Ajustar el tamaño del canvas al tamaño de la ventana
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // Clase para representar una partícula de fuego artificial
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 10,
+                    y: (Math.random() - 0.5) * 10
+                };
+                this.alpha = 1; // Transparencia
+                this.friction = 0.99; // Fricción para desacelerar
+                this.gravity = 0.1; // Gravedad
+                this.radius = Math.random() * 2 + 1; // Tamaño de la partícula
+            }
+
+            // Actualiza la posición y propiedades de la partícula
+            update() {
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+                this.velocity.y += this.gravity;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= 0.02; // Desvanece la partícula
+            }
+
+            // Dibuja la partícula en el canvas
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Función para crear una explosión de fuegos artificiales
+        function createExplosion(x, y, color) {
+            const particleCount = 50; // Número de partículas en la explosión
+            for (let i = 0; i < particleCount; i++) {
+                fireworks.push(new Particle(x, y, color));
+            }
+        }
+
+        // Genera un color aleatorio para los fuegos artificiales
+        function getRandomColor() {
+            const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Función de animación principal para los fuegos artificiales
+        function animateFireworks() {
+            animationFrameId = requestAnimationFrame(animateFireworks);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpia el canvas
+
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                fireworks[i].update();
+                fireworks[i].draw();
+
+                // Elimina las partículas que se han desvanecido
+                if (fireworks[i].alpha <= 0.01) {
+                    fireworks.splice(i, 1);
+                }
+            }
+
+            // Si no hay más partículas y la animación ha terminado
+            if (fireworks.length === 0 && !fireworksActive) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+        let fireworksActive = false;
+        let fireworkInterval;
+
+        // Función para activar los fuegos artificiales
+        function triggerFireworks() {
+            if (fireworksActive) return; // Evita múltiples inicios si ya están activos
+
+            fireworksActive = true;
+            // Detiene cualquier animación previa
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            fireworks = []; // Limpia el array de fuegos artificiales anteriores
+
+            // Inicia la animación
+            animateFireworks();
+
+            // Genera nuevas explosiones a intervalos regulares
+            fireworkInterval = setInterval(() => {
+                // Posiciones aleatorias en el tercio superior del canvas
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * (canvas.height / 2);
+                createExplosion(x, y, getRandomColor());
+            }, 300); // Cada 300ms se crea una nueva explosión
+
+            // Detiene los fuegos artificiales después de un tiempo
+            setTimeout(() => {
+                clearInterval(fireworkInterval);
+                fireworksActive = false; // Permite que se disparen de nuevo si se vuelve a llamar
+            }, 15000); // Dura 15 segundos
+        }
+
+
         // Función para actualizar la primera cuenta regresiva
         function updateCountdown() {
             const now = new Date();
             const diff = targetDate - now;
 
             // Si la fecha objetivo ya pasó
-            if (diff < 0) {
+            if (diff <= 0) { // Usamos <= 0 para asegurarnos de que se dispare justo al llegar
                 document.getElementById('countdown').innerText = '¡La fecha ha llegado!';
-                return;
+                if (!fireworksTriggered1) {
+                    triggerFireworks(); // Activa fuegos artificiales para la primera fecha
+                    fireworksTriggered1 = true;
+                }
+            } else {
+                // Calcula días, horas, minutos y segundos
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                // Actualiza el texto de la cuenta regresiva
+                document.getElementById('countdown').innerText = `${days} días, ${hours} horas, ${minutes} minutos, ${seconds} segundos`;
             }
-
-            // Calcula días, horas, minutos y segundos
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            // Actualiza el texto de la cuenta regresiva
-            document.getElementById('countdown').innerText = `${days} días, ${hours} horas, ${minutes} minutos, ${seconds} segundos`;
         }
 
         // Función para actualizar la segunda cuenta regresiva
@@ -158,19 +295,22 @@
             const diff = targetDate2 - now;
 
             // Si la fecha objetivo ya pasó
-            if (diff < 0) {
+            if (diff <= 0) { // Usamos <= 0 para asegurarnos de que se dispare justo al llegar
                 document.getElementById('countdown2').innerText = '¡La fecha ha llegado!';
-                return;
+                if (!fireworksTriggered2) {
+                    triggerFireworks(); // Activa fuegos artificiales para la segunda fecha
+                    fireworksTriggered2 = true;
+                }
+            } else {
+                // Calcula días, horas, minutos y segundos
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                // Actualiza el texto de la cuenta regresiva
+                document.getElementById('countdown2').innerText = `${days} días, ${hours} horas, ${minutes} minutos, ${seconds} segundos`;
             }
-
-            // Calcula días, horas, minutos y segundos
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            // Actualiza el texto de la cuenta regresiva
-            document.getElementById('countdown2').innerText = `${days} días, ${hours} horas, ${minutes} minutos, ${seconds} segundos`;
         }
 
 
@@ -264,6 +404,9 @@
 
         // Inicializar la cuenta regresiva y los calendarios al cargar la página
         window.onload = function() {
+            resizeCanvas(); // Ajusta el tamaño del canvas al cargar la página
+            window.addEventListener('resize', resizeCanvas); // Reajusta el tamaño del canvas si la ventana cambia
+
             updateCountdown(); // Actualiza la primera cuenta regresiva inmediatamente
             updateCountdown2(); // Actualiza la segunda cuenta regresiva inmediatamente
             setInterval(updateCountdown, 1000); // Actualiza la primera cada segundo
