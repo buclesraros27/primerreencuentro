@@ -28,6 +28,17 @@
             transform: translateY(-50%) rotate(-45deg); /* Tachado a 45 grados */
         }
 
+        /* Estilo para los días marcados con relleno rojo y texto blanco */
+        /* Se aumentó la especificidad para asegurar que el color blanco se aplique */
+        .calendar-day.marked-date {
+            background-color: #ef4444; /* Rojo Tailwind 500 para el fondo */
+            color: white; /* Texto blanco */
+            border-radius: 50%; /* Para que sea un círculo */
+            box-sizing: border-box; /* Incluye el borde en el tamaño total del elemento */
+            /* Transición para que el cambio de color sea suave */
+            transition: background-color 0.2s, color 0.2s;
+        }
+
         /* Estilo base para los elementos dentro de la cuadrícula del calendario (días y encabezados) */
         .calendar-cell {
             display: flex;
@@ -39,7 +50,7 @@
 
         /* Estilo específico para los días numéricos */
         .calendar-day {
-            border-radius: 0.5rem; /* rounded-lg */
+            border-radius: 0.5rem; /* rounded-lg, se sobrescribe por .marked-date si aplica */
             transition: background-color 0.2s;
             color: #1f2937; /* Gris 900 */
         }
@@ -102,7 +113,7 @@
 
     <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-4xl mb-8">
         <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">
-            Cada vez menos!
+            Cuenta Regresiva y Calendario hasta el 2 de Agosto de 2025
         </h1>
 
         <!-- Contenedor para la primera cuenta regresiva (2 de agosto) -->
@@ -351,6 +362,10 @@
 
             const daysGrid = calendarDiv.querySelector(`#month-${year}-${monthIndex}`);
 
+            // Normalizar las fechas objetivo para la comparación
+            const aug2_2025 = new Date('2025-08-02T00:00:00');
+            const aug22_2025 = new Date('2025-08-22T00:00:00');
+
             // Rellenar días vacíos al principio del mes
             for (let i = 0; i < startDayAdjusted; i++) {
                 const emptyDay = document.createElement('div');
@@ -375,6 +390,12 @@
                 // Aplicar tachado SÓLO si el día ya pasó (menor que hoy)
                 if (currentDayDate < today) {
                     dayDiv.classList.add('crossed-out');
+                }
+
+                // Aplicar relleno rojo y texto blanco a las fechas objetivo
+                if (currentDayDate.getTime() === aug2_2025.getTime() ||
+                    currentDayDate.getTime() === aug22_2025.getTime()) {
+                    dayDiv.classList.add('marked-date');
                 }
 
                 daysGrid.appendChild(dayDiv);
