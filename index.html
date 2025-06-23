@@ -25,20 +25,24 @@
             left: 0;
             right: 0;
             border-top: 2px solid #ef4444; /* Rojo Tailwind 500 */
-            transform: translateY(-50%) rotate(-5deg); /* Ligera inclinación */
+            transform: translateY(-50%) rotate(-45deg); /* Se cambió a -45deg para un tachado a 45 grados */
         }
 
-        /* Estilo para los días del calendario */
-        .calendar-day {
+        /* Estilo base para los elementos dentro de la cuadrícula del calendario (días y encabezados) */
+        .calendar-cell {
             display: flex;
             align-items: center;
             justify-content: center;
             height: 40px;
-            width: 40px;
+            width: 100%; /* Asegura que la celda ocupe todo el ancho de su columna 1fr */
+            /* Se eliminó 'margin: auto;' ya que 'width: 100%' hace que no sea necesario para centrado horizontal */
+        }
+
+        /* Estilo específico para los días numéricos */
+        .calendar-day {
             border-radius: 0.5rem; /* rounded-lg */
             transition: background-color 0.2s;
-            /* Asegura que los días se centren correctamente en la celda */
-            margin: auto;
+            color: #1f2937; /* Gris 900 */
         }
 
         .calendar-day.today {
@@ -57,15 +61,15 @@
             grid-template-columns: repeat(7, 1fr);
             gap: 0.5rem; /* gap-2 */
             width: 100%; /* Asegura que el calendario ocupe el ancho completo disponible */
-            max-width: 300px; /* Ancho máximo para un solo mes, ajustar si es necesario */
-            margin: 0 auto; /* Centrar el calendario dentro de su contenedor */
+            /* Se eliminó 'max-width: 300px;' para permitir que se expanda */
+            margin: 0 auto; /* Centrar el calendario dentro de su contenedor (si el padre es más ancho que el contenido total) */
         }
 
         /* Estilos responsivos para el calendario */
         @media (max-width: 640px) {
-            .calendar-day {
+            .calendar-cell { /* Ajustar tamaño también para las celdas de encabezado en móvil */
                 height: 32px;
-                width: 32px;
+                width: 100%; /* Asegurar que se mantenga el 100% en móvil */
                 font-size: 0.875rem; /* text-sm */
             }
             .calendar-header {
@@ -106,7 +110,7 @@
         <!-- Contenedor para la segunda cuenta regresiva (22 de agosto) -->
         <div class="flex flex-col items-center justify-center mb-8 bg-green-100 p-4 rounded-lg shadow-md">
             <p class="text-xl sm:text-2xl font-semibold text-green-800">
-                ¡Para el segundo reencuentro Maffei faltan solo...
+                ¡Para el segundo encuentro Maffei faltan solo...
             </p>
             <p id="countdown2" class="text-4xl sm:text-6xl font-extrabold text-green-700 mt-2">
                 -- Días
@@ -192,13 +196,13 @@
                     ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}
                 </h3>
                 <div class="calendar-grid"> <!-- Usamos la nueva clase calendar-grid -->
-                    <div class="text-center text-sm font-medium text-gray-600">Lun</div>
-                    <div class="text-center text-sm font-medium text-gray-600">Mar</div>
-                    <div class="text-center text-sm font-medium text-gray-600">Mié</div>
-                    <div class="text-center text-sm font-medium text-gray-600">Jue</div>
-                    <div class="text-center text-sm font-medium text-gray-600">Vie</div>
-                    <div class="text-center text-sm font-medium text-gray-600">Sáb</div>
-                    <div class="text-center text-sm font-medium text-gray-600">Dom</div>
+                    <div class="calendar-cell text-sm font-medium text-gray-600">Lun</div>
+                    <div class="calendar-cell text-sm font-medium text-gray-600">Mar</div>
+                    <div class="calendar-cell text-sm font-medium text-gray-600">Mié</div>
+                    <div class="calendar-cell text-sm font-medium text-gray-600">Jue</div>
+                    <div class="calendar-cell text-sm font-medium text-gray-600">Vie</div>
+                    <div class="calendar-cell text-sm font-medium text-gray-600">Sáb</div>
+                    <div class="calendar-cell text-sm font-medium text-gray-600">Dom</div>
                 </div>
                 <div class="calendar-grid mt-2" id="month-${year}-${monthIndex}"> <!-- Usamos la nueva clase calendar-grid -->
                     <!-- Los días se insertarán aquí -->
@@ -210,14 +214,14 @@
             // Rellenar días vacíos al principio del mes
             for (let i = 0; i < startDayAdjusted; i++) {
                 const emptyDay = document.createElement('div');
-                emptyDay.className = 'calendar-day other-month';
+                emptyDay.className = 'calendar-cell calendar-day other-month';
                 daysGrid.appendChild(emptyDay);
             }
 
             // Rellenar días del mes
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayDiv = document.createElement('div');
-                dayDiv.className = 'calendar-day text-gray-900';
+                dayDiv.className = 'calendar-cell calendar-day';
                 dayDiv.innerText = day;
 
                 const currentDayDate = new Date(year, monthIndex, day);
